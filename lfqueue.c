@@ -34,7 +34,9 @@
 
 #include <sys/time.h>
 #include <unistd.h> // for usleep
+#ifndef WIN32
 #include <sched.h>
+#endif
 
 #define __LFQ_VAL_COMPARE_AND_SWAP __sync_val_compare_and_swap
 #define __LFQ_BOOL_COMPARE_AND_SWAP __sync_bool_compare_and_swap
@@ -77,6 +79,24 @@ inline BOOL __SYNC_BOOL_CAS(LONG volatile *dest, LONG input, LONG comparand) {
 #endif
 #include <windows.h>
 #define __LFQ_YIELD_THREAD SwitchToThread
+
+int gettimeofday(struct timeval *tp, void *tzp) {
+  time_t clock;
+  struct tm tm;
+  SYSTEMTIME wtm;
+  GetLocalTime(&wtm);
+  tm.tm_year   = wtm.wYear - 1900;
+  tm.tm_mon   = wtm.wMonth - 1;
+  tm.tm_mday   = wtm.wDay;
+  tm.tm_hour   = wtm.wHour;
+  tm.tm_min   = wtm.wMinute;
+  tm.tm_sec   = wtm.wSecond;
+  tm. tm_isdst  = -1;
+  clock = mktime(&tm);
+  tp->tv_sec = clock;
+  tp->tv_usec = wtm.wMilliseconds * 1000;
+  return (0);
+}
 #endif
 
 #include "lfqueue.h"
